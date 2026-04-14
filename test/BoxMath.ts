@@ -1,54 +1,35 @@
 import { expect } from "chai";
 import { network } from "hardhat";
-import { Monomial, MultiPoly } from "boxmath";
 
 const { ethers } = await network.connect();
+const { parseEther } = ethers;
 
 describe("BoxMath", function () {
-  it("Should evaluate constant product xy correctly", async function () {
+  it("constantProduct: (x * y) / SCALE", async function () {
     const boxMath = await ethers.deployContract("BoxMath");
-    const scale = 10n ** 18n;
-    
-    const x = 100n * scale;
-    const y = 200n * scale;
-    
-    const solResult = await boxMath.constantProduct(x, y);
-    
-    const xy = new Monomial(scale, [1, 1]);
-    const jsResult = xy.evaluate([x, y], 18);
-    
-    expect(solResult).to.equal(jsResult);
+    const x = parseEther("100");
+    const y = parseEther("200");
+    const result = await boxMath.constantProduct(x, y);
+    expect(result).to.equal(parseEther("20000"));
   });
 
-  it("Should evaluate monomial xy with same result as JS", async function () {
+  it("evaluateMonomial: coefficient * x^e0 * y^e1 in fixed-point", async function () {
     const boxMath = await ethers.deployContract("BoxMath");
-    const scale = 10n ** 18n;
-    
-    const coefficient = scale;
-    const exponents = [1, 1];
-    const point = [10n * scale, 20n * scale];
-    
-    const solResult = await boxMath.evaluateMonomial(coefficient, exponents, point);
-    
-    const xy = new Monomial(coefficient, exponents);
-    const jsResult = xy.evaluate(point, 18);
-    
-    expect(solResult).to.equal(jsResult);
+    const result = await boxMath.evaluateMonomial(
+      parseEther("1"),
+      [1, 1],
+      [parseEther("10"), parseEther("20")]
+    );
+    expect(result).to.equal(parseEther("200"));
   });
 
-  it("Should match JS implementation for linear function", async function () {
+  it("evaluateMonomial: linear term 2x at x=5", async function () {
     const boxMath = await ethers.deployContract("BoxMath");
-    const scale = 10n ** 18n;
-    
-    const coefficient = 2n * scale;
-    const exponents = [1, 0, 0];
-    const point = [5n * scale, 0n, 0n];
-    
-    const solResult = await boxMath.evaluateMonomial(coefficient, exponents, point);
-    
-    const term = new Monomial(coefficient, exponents);
-    const jsResult = term.evaluate(point, 18);
-    
-    expect(solResult).to.equal(jsResult);
+    const result = await boxMath.evaluateMonomial(
+      parseEther("2"),
+      [1, 0, 0],
+      [parseEther("5"), 0n, 0n]
+    );
+    expect(result).to.equal(parseEther("10"));
   });
 });
