@@ -3,7 +3,7 @@ pragma solidity ^0.8.28;
 
 import "./BoxMath.sol";
 
-/// Token balances are variables in a linear MultiPoly over three participants:
+/// Token balances are variables in a linear Multinumber over three participants:
 /// accounts = x₀ + x₁ + x₂  (sender, recipient, treasury)
 /// Every transfer must satisfy accounts.evaluate(before) == accounts.evaluate(after).
 ///
@@ -57,25 +57,25 @@ contract MMPERC20 {
         require(taxDenominator * tax == taxNumerator * amount, "incommensurable split");
         require(tax + received == amount, "decomposition mismatch");
 
-        // conservation: encode the three accounts as a linear MultiPoly
+        // conservation: encode the three accounts as a linear Multinumber
         // x₀ + x₁ + x₂  —  evaluate before and after, assert equality
         uint256[] memory expSender    = new uint256[](3); expSender[0]    = 1;
         uint256[] memory expRecipient = new uint256[](3); expRecipient[1] = 1;
         uint256[] memory expTreasury  = new uint256[](3); expTreasury[2]  = 1;
 
-        BoxMath.Monomial[] memory terms = new BoxMath.Monomial[](3);
-        terms[0] = BoxMath.Monomial(1, expSender);
-        terms[1] = BoxMath.Monomial(1, expRecipient);
-        terms[2] = BoxMath.Monomial(1, expTreasury);
+        BoxMath.Polynumber[] memory terms = new BoxMath.Polynumber[](3);
+        terms[0] = BoxMath.Polynumber(1, expSender);
+        terms[1] = BoxMath.Polynumber(1, expRecipient);
+        terms[2] = BoxMath.Polynumber(1, expTreasury);
 
-        BoxMath.MultiPoly memory accounts = BoxMath.MultiPoly(terms);
+        BoxMath.Multinumber memory accounts = BoxMath.Multinumber(terms);
 
         uint256[] memory before = new uint256[](3);
         before[0] = balanceOf[msg.sender];
         before[1] = balanceOf[to];
         before[2] = balanceOf[treasury];
 
-        uint256 S = _math.evaluateMultiPoly(accounts, before);
+        uint256 S = _math.evaluateMultinumber(accounts, before);
 
         balanceOf[msg.sender] -= amount;
         balanceOf[to]         += received;
@@ -86,7 +86,7 @@ contract MMPERC20 {
         next[1] = balanceOf[to];
         next[2] = balanceOf[treasury];
 
-        require(_math.evaluateMultiPoly(accounts, next) == S, "invariant violated");
+        require(_math.evaluateMultinumber(accounts, next) == S, "invariant violated");
 
         emit Transfer(msg.sender, to, amount);
         return true;

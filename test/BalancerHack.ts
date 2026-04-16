@@ -106,10 +106,10 @@ describe("Balancer V2 rounding exploit vs MMPPair", function () {
     // k = R0 * R1 (exact natural number product, no division)
     expect(await safe.k()).to.equal(R0 * R1);
 
-    // BoxMath.evaluateMonomial at reserve0=9 returns 9 * R1 — never 0
+    // BoxMath.evaluatePolynumber at reserve0=9 returns 9 * R1 — never 0
     const bm = await ethers.deployContract("BoxMath");
     const xy = { coefficient: 1n, exponents: [1n, 1n] };
-    expect(await bm.evaluateMonomial(xy, [9n, R1])).to.equal(9n * R1);
+    expect(await bm.evaluatePolynumber(xy, [9n, R1])).to.equal(9n * R1);
   });
 
   it("safe: same drain attempt fails — invariant check catches it", async function () {

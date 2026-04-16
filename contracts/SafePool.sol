@@ -6,7 +6,7 @@ import "./BoxMath.sol";
 
 /// Isolated demo contract for the Balancer V2 case study (§9).
 ///
-/// Constant product invariant computed via BoxMath.evaluateMonomial — two
+/// Constant product invariant computed via BoxMath.evaluatePolynumber — two
 /// multiplications, no division, no upscaling step.
 ///
 /// token0 and token1 are stored at their native scale.
@@ -33,7 +33,7 @@ contract SafePool {
         exps[0] = 1; exps[1] = 1;
         uint256[] memory point = new uint256[](2);
         point[0] = r0; point[1] = r1;
-        return _math.evaluateMonomial(BoxMath.Monomial(1, exps), point);
+        return _math.evaluatePolynumber(BoxMath.Polynumber(1, exps), point);
     }
 
     function addLiquidity(uint256 a0, uint256 a1) external {

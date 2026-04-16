@@ -2,13 +2,13 @@
 pragma solidity ^0.8.28;
 
 contract BoxMath {
-    struct Monomial {
+    struct Polynumber {
         uint256 coefficient;
         uint256[] exponents;
     }
 
-    struct MultiPoly {
-        Monomial[] terms;
+    struct Multinumber {
+        Polynumber[] terms;
     }
 
     function pow(uint256 base, uint256 exp) public pure returns (uint256) {
@@ -37,7 +37,7 @@ contract BoxMath {
         return acc;
     }
 
-    function monomialDegree(Monomial memory m) public pure returns (uint256) {
+    function polynumberDegree(Polynumber memory m) public pure returns (uint256) {
         uint256 deg = 0;
         for (uint256 i = 0; i < m.exponents.length; i++) {
             deg += m.exponents[i];
@@ -45,7 +45,7 @@ contract BoxMath {
         return deg;
     }
 
-    function evaluateMonomial(Monomial memory m, uint256[] memory point) public pure returns (uint256) {
+    function evaluatePolynumber(Polynumber memory m, uint256[] memory point) public pure returns (uint256) {
         uint256 result = m.coefficient;
         for (uint256 i = 0; i < m.exponents.length; i++) {
             if (m.exponents[i] > 0) {
@@ -56,7 +56,7 @@ contract BoxMath {
         return result;
     }
 
-    function multiplyMonomials(Monomial memory a, Monomial memory b) public pure returns (Monomial memory) {
+    function multiplyPolynumbers(Polynumber memory a, Polynumber memory b) public pure returns (Polynumber memory) {
         uint256 newCoeff = a.coefficient * b.coefficient;
         uint256 maxLen = a.exponents.length > b.exponents.length ? a.exponents.length : b.exponents.length;
         uint256[] memory newExps = new uint256[](maxLen);
@@ -65,45 +65,45 @@ contract BoxMath {
             uint256 e2 = i < b.exponents.length ? b.exponents[i] : 0;
             newExps[i] = e1 + e2;
         }
-        return Monomial(newCoeff, newExps);
+        return Polynumber(newCoeff, newExps);
     }
 
-    function evaluateMultiPoly(MultiPoly memory p, uint256[] memory point) public pure returns (uint256) {
+    function evaluateMultinumber(Multinumber memory p, uint256[] memory point) public pure returns (uint256) {
         uint256 sum = 0;
         for (uint256 i = 0; i < p.terms.length; i++) {
-            sum += evaluateMonomial(p.terms[i], point);
+            sum += evaluatePolynumber(p.terms[i], point);
         }
         return sum;
     }
 
-    function addMultiPoly(MultiPoly memory a, MultiPoly memory b) public pure returns (MultiPoly memory) {
-        Monomial[] memory newTerms = new Monomial[](a.terms.length + b.terms.length);
+    function addMultinumber(Multinumber memory a, Multinumber memory b) public pure returns (Multinumber memory) {
+        Polynumber[] memory newTerms = new Polynumber[](a.terms.length + b.terms.length);
         for (uint256 i = 0; i < a.terms.length; i++) newTerms[i] = a.terms[i];
         for (uint256 i = 0; i < b.terms.length; i++) newTerms[a.terms.length + i] = b.terms[i];
-        return MultiPoly(newTerms);
+        return Multinumber(newTerms);
     }
 
-    function multiplyMultiPoly(MultiPoly memory a, MultiPoly memory b) public pure returns (MultiPoly memory) {
-        Monomial[] memory newTerms = new Monomial[](a.terms.length * b.terms.length);
+    function multiplyMultinumber(Multinumber memory a, Multinumber memory b) public pure returns (Multinumber memory) {
+        Polynumber[] memory newTerms = new Polynumber[](a.terms.length * b.terms.length);
         uint256 idx = 0;
         for (uint256 i = 0; i < a.terms.length; i++) {
             for (uint256 j = 0; j < b.terms.length; j++) {
-                newTerms[idx++] = multiplyMonomials(a.terms[i], b.terms[j]);
+                newTerms[idx++] = multiplyPolynumbers(a.terms[i], b.terms[j]);
             }
         }
-        return MultiPoly(newTerms);
+        return Multinumber(newTerms);
     }
 
-    function truncate(MultiPoly memory p, uint256 k) public pure returns (MultiPoly memory) {
+    function truncate(Multinumber memory p, uint256 k) public pure returns (Multinumber memory) {
         uint256 count = 0;
         for (uint256 i = 0; i < p.terms.length; i++) {
-            if (monomialDegree(p.terms[i]) <= k) count++;
+            if (polynumberDegree(p.terms[i]) <= k) count++;
         }
-        Monomial[] memory filtered = new Monomial[](count);
+        Polynumber[] memory filtered = new Polynumber[](count);
         uint256 idx = 0;
         for (uint256 i = 0; i < p.terms.length; i++) {
-            if (monomialDegree(p.terms[i]) <= k) filtered[idx++] = p.terms[i];
+            if (polynumberDegree(p.terms[i]) <= k) filtered[idx++] = p.terms[i];
         }
-        return MultiPoly(filtered);
+        return Multinumber(filtered);
     }
 }

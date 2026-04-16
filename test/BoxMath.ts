@@ -8,38 +8,38 @@ describe("BoxMath", function () {
     return ethers.deployContract("BoxMath");
   }
 
-  // --- Monomial ---
+  // --- Polynumber ---
 
-  it("Monomial: degree of xy is 2", async function () {
+  it("Polynumber: degree of xy is 2", async function () {
     const bm = await deploy();
     const xy = { coefficient: 1n, exponents: [1n, 1n] };
-    expect(await bm.monomialDegree(xy)).to.equal(2n);
+    expect(await bm.polynumberDegree(xy)).to.equal(2n);
   });
 
-  it("Monomial: evaluates at point (xy at [10,20] = 200)", async function () {
+  it("Polynumber: evaluates at point (xy at [10,20] = 200)", async function () {
     const bm = await deploy();
     const xy = { coefficient: 1n, exponents: [1n, 1n] };
-    expect(await bm.evaluateMonomial(xy, [10n, 20n])).to.equal(200n);
+    expect(await bm.evaluatePolynumber(xy, [10n, 20n])).to.equal(200n);
   });
 
-  it("Monomial: multiply x · y = xy", async function () {
+  it("Polynumber: multiply x · y = xy", async function () {
     const bm = await deploy();
     const x = { coefficient: 1n, exponents: [1n] };
     const y = { coefficient: 1n, exponents: [0n, 1n] };
-    const [coeff, exps] = await bm.multiplyMonomials(x, y);
+    const [coeff, exps] = await bm.multiplyPolynumbers(x, y);
     expect(coeff).to.equal(1n);
     expect(exps.map(BigInt)).to.deep.equal([1n, 1n]);
   });
 
-  // --- MultiPoly ---
+  // --- Multinumber ---
 
-  it("MultiPoly: constant product k = xy evaluates at [100,200] = 20000", async function () {
+  it("Multinumber: constant product k = xy evaluates at [100,200] = 20000", async function () {
     const bm = await deploy();
     const k = { terms: [{ coefficient: 1n, exponents: [1n, 1n] }] };
-    expect(await bm.evaluateMultiPoly(k, [100n, 200n])).to.equal(20000n);
+    expect(await bm.evaluateMultinumber(k, [100n, 200n])).to.equal(20000n);
   });
 
-  it("MultiPoly: linear f(x,y,z)=2x+3y+5z at [1,2,3] = 23", async function () {
+  it("Multinumber: linear f(x,y,z)=2x+3y+5z at [1,2,3] = 23", async function () {
     const bm = await deploy();
     const f = {
       terms: [
@@ -48,10 +48,10 @@ describe("BoxMath", function () {
         { coefficient: 5n, exponents: [0n, 0n, 1n] },
       ],
     };
-    expect(await bm.evaluateMultiPoly(f, [1n, 2n, 3n])).to.equal(23n);
+    expect(await bm.evaluateMultinumber(f, [1n, 2n, 3n])).to.equal(23n);
   });
 
-  it("MultiPoly: truncate drops terms above degree k", async function () {
+  it("Multinumber: truncate drops terms above degree k", async function () {
     const bm = await deploy();
     const coder = ethers.AbiCoder.defaultAbiCoder();
     const addr = await bm.getAddress();
@@ -78,7 +78,7 @@ describe("BoxMath", function () {
         exponents: Array.from(t[1] as bigint[]),
       })),
     };
-    expect(await bm.evaluateMultiPoly(truncated, [5n])).to.equal(17n); // 2 + 3·5 = 17
+    expect(await bm.evaluateMultinumber(truncated, [5n])).to.equal(17n); // 2 + 3·5 = 17
   });
 
   it("caretProduct: FIA box from BoxMathPrimes exercise 8.1", async function () {
@@ -97,7 +97,7 @@ describe("BoxMath", function () {
     expect(M.every((n: bigint) => n > 0n)).to.be.true;  // all natural numbers
   });
 
-  it("MultiPoly: multiplication (Wildberger) yields 6 terms", async function () {
+  it("Multinumber: multiplication (Wildberger) yields 6 terms", async function () {
     const bm = await deploy();
     const B = {
       terms: [
@@ -112,7 +112,7 @@ describe("BoxMath", function () {
         { coefficient: 1n, exponents: [0n, 0n, 1n, 0n, 1n] },
       ],
     };
-    const product = await bm.multiplyMultiPoly(B, C);
+    const product = await bm.multiplyMultinumber(B, C);
     expect(product.terms.length).to.equal(6);
   });
 });

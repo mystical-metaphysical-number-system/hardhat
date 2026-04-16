@@ -1,57 +1,60 @@
-# Sample Hardhat 3 Beta Project (`mocha` and `ethers`)
+# hardhat
 
-This project showcases a Hardhat 3 Beta project using `mocha` for tests and the `ethers` library for Ethereum interactions.
+Solidity contracts and Hardhat 3 test suite for the MMP on-chain math primitives. All contracts use exact `uint256` integer arithmetic — no fixed-point scaling, no `SCALE` constant, no division in core operations.
 
-To learn more about the Hardhat 3 Beta, please visit the [Getting Started guide](https://hardhat.org/docs/getting-started#getting-started-with-hardhat-3). To share your feedback, join our [Hardhat 3 Beta](https://hardhat.org/hardhat3-beta-telegram-group) Telegram group or [open an issue](https://github.com/NomicFoundation/hardhat/issues/new) in our GitHub issue tracker.
+## Contracts
 
-## Project Overview
+| Contract | Description |
+|----------|-------------|
+| `BoxMath.sol` | Polynomial algebra: `Polynumber`, `Multinumber`, evaluation, multiplication, truncation, caret product |
+| `PixelMath.sol` | Ordered-pair algebra: `Pixel` (pixelProduct, transpose, Pythagorean triple), `Vexel` ops, `Maxel` ops |
+| `PixelRouter.sol` | Multi-hop swap route validation via pixel algebra — structural path connectivity as a type |
+| `MMPERC20.sol` | ERC20 with tax-aware transfer using BoxMath conservation invariant |
+| `MMPPair.sol` | Uniswap V2-style AMM pool using `evaluatePolynumber` for the constant-product invariant |
+| `SafePool.sol` | Demo: BoxMath-based AMM immune to rounding-based drain attacks |
+| `VulnerablePool.sol` | Demo: `mulDown`-based AMM replicating the Balancer V2 rounding vulnerability |
 
-This example project includes:
+## Tests
 
-- A simple Hardhat configuration file.
-- Foundry-compatible Solidity unit tests.
-- TypeScript integration tests using `mocha` and ethers.js
-- Examples demonstrating how to connect to different types of networks, including locally simulating OP mainnet.
-
-## Usage
-
-### Running Tests
-
-To run all the tests in the project, execute the following command:
-
-```shell
-npx hardhat test
+```bash
+npx hardhat test           # all tests (mocha + solidity)
+npx hardhat test mocha     # TypeScript integration tests only
+npx hardhat test solidity  # Foundry-compatible Solidity unit tests
 ```
 
-You can also selectively run the Solidity or `mocha` tests:
+Current coverage:
 
-```shell
-npx hardhat test solidity
-npx hardhat test mocha
+| Suite | Tests |
+|-------|-------|
+| `BoxMath.ts` | Polynumber, Multinumber — evaluation, multiply, truncate, caretProduct |
+| `PixelMath.ts` | Pixel product, transpose, Pythagorean triples; Vexel ops; Maxel product (paper Examples 22 & 23) |
+| `PixelRouter.ts` | Single-hop, multi-hop, broken path, missing pool, empty route |
+| `MMPERC20.ts` | Tax transfer, incommensurable split revert, decomposition mismatch revert |
+| `MMPPair.ts` | Add liquidity, exact swap, conservative swap, overstated swap revert |
+| `BalancerHack.ts` | `mulDown` rounding, k-collapse exploit, SafePool immunity |
+
+## Key design notes
+
+**No fixed-point arithmetic.** `BoxMath.sol` has no `SCALE`, `mulDown`, or division. All values passed in and returned are raw natural numbers matching the `bigint` TypeScript API exactly.
+
+**ethers v6 struct caveat.** Functions that return `Polynumber` or `Multinumber` structs trigger a known ethers v6 bug with single-element `uint256[]` arrays inside nested structs. Use explicit ABI decoding via `AbiCoder.defaultAbiCoder()` with unnamed tuple types. See [Solidity API docs](https://mystical-metaphysical-number-system.github.io/mmp/docs/BoxMath/API/Solidity).
+
+**Pixel struct re-use caveat.** When passing a `Pixel` returned by one contract call into a subsequent call, reconstruct a plain object first — ethers `Result` objects are read-only and cannot be used as struct inputs directly:
+
+```ts
+const [, rawPixel] = await pm.pixelProduct(a, b);
+const pixel = { m: rawPixel.m, n: rawPixel.n };  // plain object
+await pm.pixelProduct(pixel, c);
 ```
 
-### Make a deployment to Sepolia
+## Stack
 
-This project includes an example Ignition module to deploy the contract. You can deploy this module to a locally simulated chain or to Sepolia.
+- Hardhat 3 Beta
+- Solidity 0.8.28
+- ethers v6
+- Mocha + Chai
+- OpenZeppelin contracts (MockERC20 only)
 
-To run the deployment to a local chain:
+## Docs
 
-```shell
-npx hardhat ignition deploy ignition/modules/Counter.ts
-```
-
-To run the deployment to Sepolia, you need an account with funds to send the transaction. The provided Hardhat configuration includes a Configuration Variable called `SEPOLIA_PRIVATE_KEY`, which you can use to set the private key of the account you want to use.
-
-You can set the `SEPOLIA_PRIVATE_KEY` variable using the `hardhat-keystore` plugin or by setting it as an environment variable.
-
-To set the `SEPOLIA_PRIVATE_KEY` config variable using `hardhat-keystore`:
-
-```shell
-npx hardhat keystore set SEPOLIA_PRIVATE_KEY
-```
-
-After setting the variable, you can run the deployment with the Sepolia network:
-
-```shell
-npx hardhat ignition deploy --network sepolia ignition/modules/Counter.ts
-```
+Full API reference: [mystical-metaphysical-number-system.github.io/mmp](https://mystical-metaphysical-number-system.github.io/mmp)

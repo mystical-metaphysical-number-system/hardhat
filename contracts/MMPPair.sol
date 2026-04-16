@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /// Constant product AMM — §7 of the Encoding series.
 ///
-/// Invariant: x · y = k  encoded as BoxMath.Monomial(1, [1,1])
+/// Invariant: x · y = k  encoded as BoxMath.Polynumber(1, [1,1])
 ///
 /// swap: caller proposes amountOut; pool asserts invariant holds.
 /// No division on-chain. Surplus (rounding in caller's favour for the pool)
@@ -48,12 +48,12 @@ contract MMPPair {
         // invariant: k = reserve0 * reserve1
         uint256[] memory exps = new uint256[](2);
         exps[0] = 1; exps[1] = 1;
-        BoxMath.Monomial memory xy = BoxMath.Monomial(1, exps);
+        BoxMath.Polynumber memory xy = BoxMath.Polynumber(1, exps);
 
         uint256[] memory point = new uint256[](2);
         point[0] = reserve0;
         point[1] = reserve1;
-        uint256 k = _math.evaluateMonomial(xy, point);
+        uint256 k = _math.evaluatePolynumber(xy, point);
 
         token0.transferFrom(msg.sender, address(this), amountIn);
         token1.transfer(msg.sender, amountOut);
@@ -63,7 +63,7 @@ contract MMPPair {
         newPoint[1] = reserve1 - amountOut;
 
         // caller-proposes: pool only checks, never divides
-        require(_math.evaluateMonomial(xy, newPoint) >= k, "invariant violated");
+        require(_math.evaluatePolynumber(xy, newPoint) >= k, "invariant violated");
 
         reserve0 = newPoint[0];
         reserve1 = newPoint[1];
